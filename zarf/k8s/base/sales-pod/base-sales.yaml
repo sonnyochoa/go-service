@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sales-system
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sales-pod
+  namespace: sales-system
+spec:
+  selector:
+    matchLabels:
+      app: go-sales
+  template:
+    metadata:
+      labels:
+        app: go-sales
+    spec:
+      dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: true
+      terminationGracePeriodSeconds: 60
+      containers:
+      - name: sales-api
+        image: sales-api-image
