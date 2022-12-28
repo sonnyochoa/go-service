@@ -19,13 +19,12 @@ dev.setup.mac.arm64: dev.setup.mac.common
 
 VERSION := 1.0
 
-all: service
+all: sales-api
 
-# --platform linux/amd64
-service:
+sales-api:
 	docker build \
-		-f zarf/docker/dockerfile \
-		-t service-arm64:$(VERSION) \
+		-f zarf/docker/dockerfile.sales-api \
+		-t sales-api-arm64:$(VERSION) \
 		--build-arg BUILD_REF=$(VERSION) \
 		--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
 		.
@@ -46,37 +45,38 @@ kind-up:
 		--image kindest/node:v1.26.0@sha256:691e24bd2417609db7e589e1a479b902d2e209892a10ce375fab60a8407c7352 \
 		--name $(KIND_CLUSTER) \
 		--config zarf/k8s/kind/kind-config.yaml
-	kubectl config set-context --current --namespace=service-system
+	kubectl config set-context --current --namespace=sales-system
 
 kind-down:
 	kind delete cluster --name $(KIND_CLUSTER)
 
 kind-load:
-	kind load docker-image service-arm64:$(VERSION) --name $(KIND_CLUSTER)
+	cd zarf/k8s/kind/sales-pod; kustomize edit set image sales-api-image=sales-api-arm64:$(VERSION)
+	kind load docker-image sales-api-arm64:$(VERSION) --name $(KIND_CLUSTER)
 
 kind-apply:
-	kustomize build zarf/k8s/kind/service-pod | kubectl apply -f -
+	kustomize build zarf/k8s/kind/sales-pod | kubectl apply -f -
 
 kind-status:
 	kubectl get nodes -o wide
 	kubectl get svc -o wide
 	kubectl get pods -o wide --watch --all-namespaces
 
-kind-status-service:
+kind-status-sales:
 	kubectl get pods -o wide --watch 
 
 kind-logs:
-	kubectl logs -l app=go-service --all-containers=true -f --tail=100 
+	kubectl logs -l app=go-sales --all-containers=true -f --tail=100 
 
 kind-restart:
-	kubectl rollout restart deployment service-pod
+	kubectl rollout restart deployment sales-pod
 
 kind-update: all kind-load kind-restart
 
 kind-update-apply: all kind-load kind-apply
 
 kind-describe:
-	kubectl describe pod -l app=go-service
+	kubectl describe pod -l app=go-sales
 
 
 # ==============================================================================
