@@ -52,6 +52,7 @@ func (a *App) Handle(method string, group string, path string, handler Handler, 
 	h := func(w http.ResponseWriter, r *http.Request) {
 		// INJECT CODE
 
+		// Call the wrapped handler functions.
 		if err := handler(r.Context(), w, r); err != nil {
 			// INJECT CODE
 			return
