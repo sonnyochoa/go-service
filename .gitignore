@@ -15,6 +15,7 @@ app/services/sales-api/sales-api
 # Folders
 _obj
 _test
+zarf/keys/
 
 # Editor files
 .idea/
