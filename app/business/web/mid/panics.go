@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"runtime/debug"
 
+	"github.com/sonnyochoa/go-service/app/business/sys/metrics"
 	"github.com/sonnyochoa/go-service/foundation/web"
 )
 
@@ -29,7 +30,7 @@ func Panics() web.Middleware {
 					err = fmt.Errorf("PANIC [%v] TRACE[%s]", rec, string(trace))
 
 					// Updates the metrics stored in the context.
-					//metrics.AddPanics(ctx)
+					metrics.AddPanics(ctx)
 				}
 			}()
 
