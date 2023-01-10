@@ -17,7 +17,7 @@ FROM arm64v8/alpine:3.17
 ARG BUILD_DATE
 ARG BUILD_REF
 
-
+COPY --from=build_sales-api /go-service/zarf/keys/. /go-service/zarf/keys/.
 COPY --from=build_sales-api /go-service/app/services/sales-api/sales-api /go-service/sales-api
 WORKDIR /go-service
 CMD ["./sales-api"]
