@@ -13,6 +13,11 @@ SHELL := /bin/bash
 # openssl rsa -pubout -in private.pem -out public.pem
 
 #
+# Testing Authetication.
+# curl -il http://localhost:3000/v1/test/auth
+# curl -il -H "Authorization: Bearer ${TOKEN}" http://localhost:3000/v1/test/auth
+
+#
 # expvarmon -ports=":4000" -vars="build,requests,goroutines,errors,panics,mem:memstats.Alloc"
 # ==============================================================================
 
@@ -22,6 +27,13 @@ run:
 admin:
 	go run app/tooling/admin/main.go
 
+# ==============================================================================
+# Running tests within the local computer
+test:
+	go test ./... -count=1
+	staticcheck -checks=all ./...
+
+# ==============================================================================
 dev.setup.mac.common:
 	brew update
 	brew tap hashicorp/tap
@@ -74,6 +86,8 @@ kind-load:
 	kind load docker-image sales-api-arm64:$(VERSION) --name $(KIND_CLUSTER)
 
 kind-apply:
+	kustomize build zarf/k8s/kind/database-pod | kubectl apply -f -
+	kubectl wait --namespace=database-system --timeout=300s --for=condition=Available deployment/database-pod
 	kustomize build zarf/k8s/kind/sales-pod | kubectl apply -f -
 
 kind-status:
@@ -83,6 +97,9 @@ kind-status:
 
 kind-status-sales:
 	kubectl get pods -o wide --watch 
+
+kind-status-db:
+	kubectl get pods -o wide --watch --namespace=database-system
 
 kind-logs:
 	kubectl logs -l app=go-sales --all-containers=true -f --tail=100 | go run app/tooling/logfmt/main.go
