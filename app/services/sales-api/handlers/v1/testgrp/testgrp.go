@@ -1,4 +1,4 @@
-// A group of test handlers for user access.
+// Package testgrp contains all the test handlers.
 package testgrp
 
 import (
