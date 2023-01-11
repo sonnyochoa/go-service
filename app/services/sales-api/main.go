@@ -125,8 +125,6 @@ func run(log *zap.SugaredLogger) error {
 		DisableTLS:   cfg.DB.DisableTLS,
 	})
 
-	log.Infow("DATABASE", "db.OPEN ERROR", "AFTER initializing DB SUPPORT", "ERROR:", err)
-	log.Infow("DATABASE", "db.OPEN STATE", "AFTER initializing DB SUPPORT", "DB:", db)
 	if err != nil {
 		return fmt.Errorf("connecting to db: %w", err)
 	}
