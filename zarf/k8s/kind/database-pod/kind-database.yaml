@@ -20,6 +20,7 @@ spec:
         app: database
     spec:
       dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: true
       containers:
       - name: postgres
         image: postgres:15-alpine
@@ -28,9 +29,10 @@ spec:
             cpu: "1000m" # Up to 1 full core
           requests:
             cpu: "1000m" # Use 1 full core
+        imagePullPolicy: Always
         env:
         - name: POSTGRES_PASSWORD
-          valueFrom: 
+          valueFrom:
             configMapKeyRef:
               name: app-config
               key: db_password

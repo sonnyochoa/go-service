@@ -3,3 +3,4 @@ kind: Kustomization
 resources:
   - ./kind-database-config.yaml
   - ./kind-database.yaml
+  
