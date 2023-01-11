@@ -14,6 +14,7 @@ import (
 
 	"github.com/ardanlabs/conf/v3"
 	"github.com/sonnyochoa/go-service/app/business/sys/auth"
+	"github.com/sonnyochoa/go-service/app/business/sys/database"
 	"github.com/sonnyochoa/go-service/app/services/sales-api/handlers"
 	"github.com/sonnyochoa/go-service/foundation/keystore"
 	"go.uber.org/automaxprocs/maxprocs"
@@ -70,6 +71,15 @@ func run(log *zap.SugaredLogger) error {
 			KeysFolder string `conf:"default:zarf/keys/"`
 			ActiveKID  string `conf:"default:54bb2165-71e1-41a6-af3e-7da4a0e1e2c1"`
 		}
+		DB struct {
+			User         string `conf:"default:postgres"`
+			Password     string `conf:"default:postgres,mask"`
+			Host         string `conf:"default:localhost"`
+			Name         string `conf:"default:postgres"`
+			MaxIdleConns int    `conf:"default:0"`
+			MaxOpenConns int    `conf:"default:0"`
+			DisableTLS   bool   `conf:"default:true"`
+		}
 	}{
 		Version: conf.Version{
 			Build: build,
@@ -101,6 +111,31 @@ func run(log *zap.SugaredLogger) error {
 	expvar.NewString("build").Set(build)
 
 	// =========================================================================
+	// Database Support
+
+	log.Infow("startup", "status", "initializing database support", "host", cfg.DB.Host)
+
+	db, err := database.Open(database.Config{
+		User:         cfg.DB.User,
+		Password:     cfg.DB.Password,
+		Host:         cfg.DB.Host,
+		Name:         cfg.DB.Name,
+		MaxIdleConns: cfg.DB.MaxIdleConns,
+		MaxOpenConns: cfg.DB.MaxOpenConns,
+		DisableTLS:   cfg.DB.DisableTLS,
+	})
+
+	log.Infow("DATABASE", "db.OPEN ERROR", "AFTER initializing DB SUPPORT", "ERROR:", err)
+	log.Infow("DATABASE", "db.OPEN STATE", "AFTER initializing DB SUPPORT", "DB:", db)
+	if err != nil {
+		return fmt.Errorf("connecting to db: %w", err)
+	}
+	defer func() {
+		log.Infow("shutdown", "status", "stopping database support", "host", cfg.DB.Host)
+		db.Close()
+	}()
+
+	// =========================================================================
 	// Initialize authentication support
 
 	log.Infow("startup", "status", "initializing authentication support")
@@ -123,7 +158,7 @@ func run(log *zap.SugaredLogger) error {
 	log.Infow("startup", "status", "debug v1 router started", "host", cfg.Web.DebugHost)
 
 	// Construct the mux for the debug calls.
-	debugMux := handlers.Mux(build, log)
+	debugMux := handlers.Mux(build, log, db)
 
 	// Start the service listening for debug requests.
 	// Not concerned with shutting this down with load shedding.
@@ -148,6 +183,7 @@ func run(log *zap.SugaredLogger) error {
 		Shutdown: shutdown,
 		Log:      log,
 		Auth:     auth,
+		DB:       db,
 	})
 
 	// Construct a server to service the request against the mux.
