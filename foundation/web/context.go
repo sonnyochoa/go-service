@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -47,4 +48,19 @@ func SetStatusCode(ctx context.Context, statusCode int) {
 	}
 
 	v.StatusCode = statusCode
+}
+
+// AddSpan adds a OpenTelemetry span to the trace and context.
+func AddSpan(ctx context.Context, spanName string, keyValues ...attribute.KeyValue) (context.Context, trace.Span) {
+	v, ok := ctx.Value(key).(*Values)
+	if !ok || v.Tracer == nil {
+		return ctx, trace.SpanFromContext(ctx)
+	}
+
+	ctx, span := v.Tracer.Start(ctx, spanName)
+	for _, kv := range keyValues {
+		span.SetAttributes(kv)
+	}
+
+	return ctx, span
 }
