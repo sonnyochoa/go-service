@@ -6,6 +6,10 @@ ARG BUILD_REF
 # Copy the source code into the container.
 COPY . /go-service
 
+# Build the admin binary.
+WORKDIR /go-service/app/tooling/admin
+RUN go build -ldflags "-X main.build=${BUILD_REF}"
+
 # Set the Destination for COPY
 WORKDIR /go-service/app/services/sales-api
 
@@ -18,6 +22,7 @@ ARG BUILD_DATE
 ARG BUILD_REF
 
 COPY --from=build_sales-api /go-service/zarf/keys/. /go-service/zarf/keys/.
+COPY --from=build_sales-api /go-service/app/tooling/admin/admin /go-service/admin
 COPY --from=build_sales-api /go-service/app/services/sales-api/sales-api /go-service/sales-api
 WORKDIR /go-service
 CMD ["./sales-api"]
